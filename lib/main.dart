@@ -7,7 +7,7 @@ void main() {
 }
 
 class CalorieCodeApp extends StatelessWidget {
-  const CalorieCodeApp({Key? key}) : super(key: key);
+  const CalorieCodeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
