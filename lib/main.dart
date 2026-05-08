@@ -1,6 +1,5 @@
-//lib/main.dart
-
 import 'package:flutter/material.dart';
+import 'screens/home_shell.dart';
 
 void main() {
   runApp(const CalorieCodeApp());
@@ -14,14 +13,18 @@ class CalorieCodeApp extends StatelessWidget {
     return MaterialApp(
       title: 'CalorieCode',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('CalorieCode'),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+          brightness: Brightness.dark,
         ),
+        useMaterial3: true,
       ),
+      themeMode: ThemeMode.system,
+      home: const HomeShell(),
     );
   }
 }
