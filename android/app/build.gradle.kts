@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.caloriecode"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -24,10 +24,10 @@ android {
         applicationId = "com.example.caloriecode"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
@@ -41,4 +41,19 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Camera
+    implementation("androidx.camera:camera-core:1.3.0")
+    implementation("androidx.camera:camera-camera2:1.3.0")
+
+    // ML Kit
+    implementation("com.google.mlkit:barcode-scanning:17.1.0")
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // Firebase
+    implementation("com.google.firebase:firebase-core:21.1.1")
+    implementation("com.google.firebase:firebase-crashlytics:18.6.0")
+    implementation("com.google.firebase:firebase-analytics:21.5.0")
 }
