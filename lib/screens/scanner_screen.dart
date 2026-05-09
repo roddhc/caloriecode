@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../utils/design_colors.dart';
 import 'result_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   final MobileScannerController cameraController = MobileScannerController();
   bool _isNavigating = false;
+  bool _isGlowing = false;
 
   void _onDetect(BarcodeCapture capture) {
     if (_isNavigating) return;
@@ -19,9 +22,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
       final String barcode = barcodes.first.rawValue!;
+
+      // Trigger glow and haptic
       setState(() {
+        _isGlowing = true;
         _isNavigating = true;
       });
+      HapticFeedback.lightImpact();
+
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _isGlowing = false;
+          });
+        }
+      });
+
       cameraController.stop();
       Navigator.push(
         context,
@@ -30,10 +46,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ),
       ).then((_) {
         // When coming back, resume camera
-        setState(() {
-          _isNavigating = false;
-        });
-        cameraController.start();
+        if (mounted) {
+          setState(() {
+            _isNavigating = false;
+          });
+          cameraController.start();
+        }
       });
     }
   }
@@ -57,15 +75,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error,
-                      color: Colors.red,
+                      color: DesignColors.getDangerRed(context),
                       size: 64,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Camera error: ${error.errorCode}',
-                      style: const TextStyle(color: Colors.red),
+                      style: TextStyle(color: DesignColors.getDangerRed(context)),
                     ),
                   ],
                 ),
@@ -74,29 +92,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
           // Barcode detection guide overlay
           Center(
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
               width: 250,
               height: 250,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.green, width: 2),
+                border: Border.all(
+                  color: _isGlowing ? Colors.white : Colors.white.withOpacity(0.5),
+                  width: _isGlowing ? 4 : 2,
+                ),
                 borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 60,
-            left: 0,
-            right: 0,
-            child: Text(
-              'Align barcode within the frame',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(color: Colors.black, blurRadius: 4),
-                ],
+                boxShadow: _isGlowing
+                    ? [
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.8),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        )
+                      ]
+                    : null,
               ),
             ),
           ),
@@ -109,11 +123,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: DesignColors.getPrimaryBlue(context).withOpacity(0.1),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -122,21 +136,47 @@ class _ScannerScreenState extends State<ScannerScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Active Food Code: Vegan',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                Text(
+                  '🧬 Code: Cut Mode',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: DesignColors.getPrimaryBlue(context),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 48, // 48pt+ touch target
-                  child: FilledButton(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DesignColors.getPrimaryBlue(context),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     onPressed: () {
+                      HapticFeedback.lightImpact();
                       // Manual scan logic or feedback if needed
                     },
-                    child: const Text('Scan Food'),
+                    icon: const Icon(Icons.search, size: 20),
+                    label: const Text(
+                      'Scan Food',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                Text(
+                  'or tap to search',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: DesignColors.getTextSecondaryColor(context),
+                  ),
+                ),
+                // Add some bottom padding for the safe area if needed
+                const SizedBox(height: 8),
               ],
             ),
           );

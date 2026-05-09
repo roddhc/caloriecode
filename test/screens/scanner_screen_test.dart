@@ -10,11 +10,8 @@ void main() {
       ),
     );
 
-    // Verify detection guide text
-    expect(find.text('Align barcode within the frame'), findsOneWidget);
-
     // Verify bottom sheet content
-    expect(find.text('Active Food Code: Vegan'), findsOneWidget);
+    expect(find.text('🧬 Code: Cut Mode'), findsOneWidget);
     expect(find.text('Scan Food'), findsOneWidget);
 
     // Verify scan button is tappable
