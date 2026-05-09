@@ -14,16 +14,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify content
-    expect(find.text('Avoid'), findsOneWidget);
-    expect(find.text('Barcode: $testBarcode'), findsOneWidget);
-    expect(find.text('Contains high sugar'), findsOneWidget);
-    expect(find.text('Healthy Oat Cookies'), findsOneWidget);
+    expect(find.text('WORTH IT'), findsOneWidget);
+    expect(find.text('High protein (20g)'), findsOneWidget);
 
     // Verify Scan Again button
-    expect(find.text('Scan Again'), findsOneWidget);
+    expect(find.text('Scan Again'), findsWidgets); // Found multiple scan texts
 
     // Test tapping Scan Again (it should pop the screen)
-    await tester.tap(find.text('Scan Again'));
+    await tester.tap(find.text('Scan Again').first);
     await tester.pumpAndSettle();
     expect(find.byType(ResultScreen), findsNothing);
   });

@@ -21,7 +21,7 @@ void main() {
 
     // Verify list items
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Scanned Item 1'), findsOneWidget);
+    expect(find.text('Scanned Product 1'), findsOneWidget);
 
     // Tap filter
     await tester.tap(find.text('🟢').first);

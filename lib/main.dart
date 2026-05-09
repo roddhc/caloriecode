@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_shell.dart';
+import 'utils/design_colors.dart';
 
 void main() {
   runApp(const CalorieCodeApp());
@@ -13,14 +14,22 @@ class CalorieCodeApp extends StatelessWidget {
     return MaterialApp(
       title: 'CalorieCode',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: DesignColors.primaryBlue,
+          primary: DesignColors.primaryBlue,
+          background: DesignColors.backgroundLight,
+        ),
+        scaffoldBackgroundColor: DesignColors.backgroundLight,
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+          seedColor: DesignColors.primaryBlue,
+          primary: DesignColors.primaryBlue,
+          background: DesignColors.backgroundDark,
           brightness: Brightness.dark,
         ),
+        scaffoldBackgroundColor: DesignColors.backgroundDark,
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,

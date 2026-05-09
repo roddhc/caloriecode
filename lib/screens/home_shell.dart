@@ -30,6 +30,7 @@ class _HomeShellState extends State<HomeShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
+        indicatorColor: Theme.of(context).colorScheme.primaryContainer,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
