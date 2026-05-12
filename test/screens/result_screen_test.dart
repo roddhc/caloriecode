@@ -1,27 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:caloriecode/screens/result_screen.dart';
+import 'package:caloriecode/models/product.dart';
+
+import 'package:caloriecode/providers/food_code_provider.dart';
+import 'package:caloriecode/providers/scan_history_provider.dart';
+import 'package:caloriecode/models/food_code.dart';
+import 'package:mockito/mockito.dart';
+import 'package:provider/provider.dart';
+import '../utils/test_data.mocks.dart';
 
 void main() {
   testWidgets('ResultScreen renders correctly', (WidgetTester tester) async {
-    const testBarcode = '123456789012';
+    final mockFoodCodeProvider = MockFoodCodeProvider();
+    final mockScanHistoryProvider = MockScanHistoryProvider();
+
+    when(mockFoodCodeProvider.activeFoodCode).thenReturn(
+      FoodCode(
+        id: 'test_code',
+        name: 'Low Sugar',
+        bannedIngredients: [],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      )
+    );
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: ResultScreen(barcode: testBarcode),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<FoodCodeProvider>.value(value: mockFoodCodeProvider),
+          ChangeNotifierProvider<ScanHistoryProvider>.value(value: mockScanHistoryProvider),
+        ],
+        child: MaterialApp(
+          home: ResultScreen(
+            barcode: '123456789',
+            product: const Product(
+              barcode: '123456789',
+              name: 'Test Product',
+              source: ProductSource.offApi,
+            ),
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
 
     // Verify content
-    expect(find.text('WORTH IT'), findsOneWidget);
-    expect(find.text('High protein (20g)'), findsOneWidget);
+    expect(find.text('CAUTION'), findsOneWidget); // Missing data defaults to Yellow
+    expect(find.text('Test Product'), findsOneWidget);
 
-    // Verify Scan Again button
-    expect(find.text('Scan Again'), findsWidgets); // Found multiple scan texts
+    // Verify Add to History button
+    expect(find.text('Add to History'), findsOneWidget);
 
-    // Test tapping Scan Again (it should pop the screen)
-    await tester.tap(find.text('Scan Again').first);
+    // Test tapping Scan Another (it should pop the screen)
+    await tester.tap(find.text('Scan Another').first);
     await tester.pumpAndSettle();
     expect(find.byType(ResultScreen), findsNothing);
   });

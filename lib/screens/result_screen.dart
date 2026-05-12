@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+import '../models/product.dart';
+import '../models/decision.dart';
+import '../models/scan_history_entry.dart';
+import '../providers/food_code_provider.dart';
+import '../providers/scan_history_provider.dart';
+import '../services/evaluation_service.dart';
 import '../utils/design_colors.dart';
 import '../utils/design_typography.dart';
 import '../utils/design_spacing.dart';
 
 class ResultScreen extends StatefulWidget {
   final String barcode;
+  final Product product;
 
-  const ResultScreen({super.key, required this.barcode});
+  const ResultScreen({super.key, required this.barcode, required this.product});
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -29,17 +38,14 @@ class _ResultScreenState extends State<ResultScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
-  // Dummy data for design purposes
-  final String decisionEmoji = '🟢';
-  final String decisionText = 'WORTH IT';
-  final String decisionDescription = 'Fits your fiber goal and daily micronutrient needs perfectly';
-  final Color decisionBgColor = DesignColors.greenLightBg;
-  final Color decisionTextColor = DesignColors.successGreen;
+  late GradeResult _gradeResult;
+  bool _isEvaluating = true;
 
   @override
   void initState() {
     super.initState();
+    _evaluate();
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 400), // 400ms duration per design
       vsync: this,
@@ -55,6 +61,54 @@ class _ResultScreenState extends State<ResultScreen>
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) _controller.forward();
     });
+  }
+
+  void _evaluate() {
+    final foodCode = Provider.of<FoodCodeProvider>(context, listen: false).activeFoodCode;
+    if (foodCode != null) {
+      final evaluator = EvaluationService();
+      _gradeResult = evaluator.evaluateProduct(widget.product, foodCode);
+    } else {
+      _gradeResult = GradeResult(
+        decision: DecisionResult.yellow,
+        color: Colors.amber,
+        reason: 'Yellow: No Food Code selected.',
+      );
+    }
+    setState(() {
+      _isEvaluating = false;
+    });
+  }
+
+  Future<void> _saveToHistory() async {
+    final foodCodeId = Provider.of<FoodCodeProvider>(context, listen: false).activeFoodCode?.id ?? 'unknown';
+
+    final entry = ScanHistoryEntry(
+      id: const Uuid().v4(),
+      barcode: widget.barcode,
+      productName: widget.product.name,
+      scannedAt: DateTime.now(),
+      decision: _gradeResult.decision,
+      mode: DecisionMode.buy,
+      foodCodeId: foodCodeId,
+      wasSaved: true,
+    );
+
+    try {
+      await Provider.of<ScanHistoryProvider>(context, listen: false).addScan(entry);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to history!')),
+        );
+        Navigator.pop(context); // Go back to scan
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving to history: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -109,8 +163,36 @@ class _ResultScreenState extends State<ResultScreen>
     );
   }
 
+  String _getEmoji(DecisionResult result) {
+    switch (result) {
+      case DecisionResult.green:
+        return '✓';
+      case DecisionResult.yellow:
+        return '⚠️';
+      case DecisionResult.red:
+        return '✗';
+    }
+  }
+
+  String _getText(DecisionResult result) {
+    switch (result) {
+      case DecisionResult.green:
+        return 'COMPLIANT';
+      case DecisionResult.yellow:
+        return 'CAUTION';
+      case DecisionResult.red:
+        return 'AVOID';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isEvaluating) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -157,7 +239,7 @@ class _ResultScreenState extends State<ResultScreen>
                 );
               },
               child: Card(
-                color: decisionBgColor,
+                color: _gradeResult.color.withOpacity(0.2),
                 elevation: 2, // Material 3 elevation 2
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(DesignSpacing.radiusCard),
@@ -166,22 +248,29 @@ class _ResultScreenState extends State<ResultScreen>
                   padding: const EdgeInsets.all(DesignSpacing.lg),
                   child: Column(
                     children: [
-                      Text(
-                        decisionEmoji,
-                        style: const TextStyle(fontSize: 64),
-                      ),
-                      const SizedBox(height: DesignSpacing.sm),
-                      Text(
-                        decisionText,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: decisionTextColor,
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _gradeResult.color,
+                        ),
+                        child: Text(
+                          _getEmoji(_gradeResult.decision),
+                          style: const TextStyle(fontSize: 48, color: Colors.white),
                         ),
                       ),
                       const SizedBox(height: DesignSpacing.sm),
                       Text(
-                        decisionDescription,
+                        _getText(_gradeResult.decision),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: _gradeResult.color,
+                        ),
+                      ),
+                      const SizedBox(height: DesignSpacing.sm),
+                      Text(
+                        _gradeResult.reason,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -196,7 +285,7 @@ class _ResultScreenState extends State<ResultScreen>
             const SizedBox(height: DesignSpacing.lg),
             // Product Info Section
             Text(
-              'Skyr High-Protein Yogurt',
+              widget.product.name ?? 'Unknown Product',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -204,24 +293,25 @@ class _ResultScreenState extends State<ResultScreen>
               ),
             ),
             Text(
-              'Danone',
+              widget.product.brand ?? 'Unknown Brand',
               style: TextStyle(
                 fontSize: 14,
                 color: DesignColors.getTextSecondaryColor(context),
               ),
             ),
-            Text(
-              '170g (1 cup)',
-              style: TextStyle(
-                fontSize: 12,
-                color: DesignColors.getTextTertiaryColor(context),
+            if (widget.product.nutrition?.servingSize != null)
+              Text(
+                widget.product.nutrition!.servingSize!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: DesignColors.getTextTertiaryColor(context),
+                ),
               ),
-            ),
             const SizedBox(height: DesignSpacing.lg),
 
-            // Key Reasons Section
+            // Macros
             Text(
-              'Key Reasons',
+              'Nutrition Facts',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -229,23 +319,30 @@ class _ResultScreenState extends State<ResultScreen>
               ),
             ),
             const SizedBox(height: DesignSpacing.sm),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.check_circle, color: DesignColors.successGreen, size: 20),
-              title: Text(
-                'High protein (20g)',
-                style: TextStyle(fontSize: 14, color: DesignColors.getTextColor(context)),
+            if (widget.product.nutrition != null) ...[
+              Text('Calories: ${widget.product.nutrition!.caloriePerServing ?? widget.product.nutrition!.caloriesPer100g ?? '?'}'),
+              Text('Protein: ${widget.product.nutrition!.protein ?? '?'}g'),
+              Text('Carbs: ${widget.product.nutrition!.carbs ?? '?'}g'),
+              Text('Fat: ${widget.product.nutrition!.fat ?? '?'}g'),
+              Text('Sugar: ${widget.product.nutrition!.sugar ?? '?'}g'),
+            ] else
+              const Text('Nutrition data unavailable.'),
+
+            const SizedBox(height: DesignSpacing.lg),
+
+            // Ingredients
+            Text(
+              'Ingredients',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: DesignColors.getTextColor(context),
               ),
-              dense: true,
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.warning, color: DesignColors.warningOrange, size: 20),
-              title: Text(
-                'Contains dairy (for allergies)',
-                style: TextStyle(fontSize: 14, color: DesignColors.getTextColor(context)),
-              ),
-              dense: true,
+            const SizedBox(height: DesignSpacing.sm),
+            Text(
+              widget.product.ingredients?.join(', ') ?? 'Ingredients data unavailable.',
+              style: TextStyle(fontSize: 12, color: DesignColors.getTextColor(context)),
             ),
 
             const SizedBox(height: DesignSpacing.lg),
@@ -293,10 +390,10 @@ class _ResultScreenState extends State<ResultScreen>
                     ),
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      // Share functionality
+                      _saveToHistory();
                     },
-                    icon: const Icon(Icons.ios_share),
-                    label: const Text('Share', style: DesignTypography.button),
+                    icon: const Icon(Icons.check),
+                    label: const Text('Add to History', style: DesignTypography.button),
                   ),
                 ),
               ),
@@ -315,10 +412,10 @@ class _ResultScreenState extends State<ResultScreen>
                     ),
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      // Save functionality
+                      Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.bookmark_border),
-                    label: const Text('Save', style: DesignTypography.button),
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text('Scan Another', style: DesignTypography.button),
                   ),
                 ),
               ),

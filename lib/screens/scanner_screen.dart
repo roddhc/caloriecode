@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+import '../models/product.dart';
+import '../providers/food_code_provider.dart';
+import '../services/openfoodfacts_service.dart';
 import '../utils/design_colors.dart';
 import 'result_screen.dart';
 
@@ -16,8 +20,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _isNavigating = false;
   bool _isGlowing = false;
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onDetect(BarcodeCapture capture) async {
     if (_isNavigating) return;
+
+    final foodCodeProvider = Provider.of<FoodCodeProvider>(context, listen: false);
+    if (foodCodeProvider.activeFoodCode == null) {
+      setState(() {
+        _isNavigating = true;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a Food Code first.')),
+        );
+      }
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isNavigating = false;
+          });
+        }
+      });
+      return;
+    }
 
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
@@ -39,21 +63,98 @@ class _ScannerScreenState extends State<ScannerScreen> {
       });
 
       cameraController.stop();
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResultScreen(barcode: barcode),
-        ),
-      ).then((_) {
-        // When coming back, resume camera
+
+      // Fetch product
+      final offService = OpenFoodFactsService();
+      Product? product;
+      try {
+        product = await offService.fetchProduct(barcode);
+      } catch (e) {
         if (mounted) {
-          setState(() {
-            _isNavigating = false;
-          });
-          cameraController.start();
+          _showErrorModal('Couldn\'t fetch product details. Check your internet and try again.');
+          return;
         }
-      });
+      }
+
+      if (product == null && mounted) {
+        _showNotFoundModal(barcode);
+        return;
+      }
+
+      if (mounted && product != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultScreen(barcode: barcode, product: product!),
+          ),
+        ).then((_) {
+          // When coming back, resume camera
+          if (mounted) {
+            setState(() {
+              _isNavigating = false;
+            });
+            cameraController.start();
+          }
+        });
+      }
     }
+  }
+
+  void _showErrorModal(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _isNavigating = false;
+              });
+              cameraController.start();
+            },
+            child: const Text('Back to Scan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotFoundModal(String barcode) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Product Not Found'),
+        content: const Text('Product not found in database. Do you want to manually enter details?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _isNavigating = false;
+              });
+              cameraController.start();
+            },
+            child: const Text('No'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to manual entry screen
+              setState(() {
+                _isNavigating = false;
+              });
+              cameraController.start();
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
