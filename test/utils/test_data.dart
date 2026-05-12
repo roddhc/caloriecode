@@ -7,8 +7,10 @@ import 'package:mockito/annotations.dart';
 import 'package:caloriecode/services/product_data_service.dart';
 import 'package:caloriecode/services/food_code_service.dart';
 import 'package:caloriecode/repositories/scan_history_repository.dart';
+import 'package:caloriecode/providers/food_code_provider.dart';
+import 'package:caloriecode/providers/scan_history_provider.dart';
 
-@GenerateMocks([ProductDataService, FoodCodeService, ScanHistoryRepository])
+@GenerateMocks([ProductDataService, FoodCodeService, ScanHistoryRepository, FoodCodeProvider, ScanHistoryProvider])
 class TestData {
   static const testBarcode = '123456789012';
 

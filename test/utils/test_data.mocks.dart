@@ -4,10 +4,13 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
+import 'dart:ui' as _i10;
 
 import 'package:caloriecode/models/food_code.dart' as _i2;
 import 'package:caloriecode/models/product.dart' as _i5;
 import 'package:caloriecode/models/scan_history_entry.dart' as _i8;
+import 'package:caloriecode/providers/food_code_provider.dart' as _i9;
+import 'package:caloriecode/providers/scan_history_provider.dart' as _i11;
 import 'package:caloriecode/repositories/scan_history_repository.dart' as _i7;
 import 'package:caloriecode/services/food_code_service.dart' as _i6;
 import 'package:caloriecode/services/product_data_service.dart' as _i3;
@@ -187,4 +190,181 @@ class MockScanHistoryRepository extends _i1.Mock
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+}
+
+/// A class which mocks [FoodCodeProvider].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockFoodCodeProvider extends _i1.Mock implements _i9.FoodCodeProvider {
+  MockFoodCodeProvider() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  List<_i2.FoodCode> get allCodes => (super.noSuchMethod(
+        Invocation.getter(#allCodes),
+        returnValue: <_i2.FoodCode>[],
+      ) as List<_i2.FoodCode>);
+
+  @override
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get hasListeners => (super.noSuchMethod(
+        Invocation.getter(#hasListeners),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i4.Future<void> loadAllCodes() => (super.noSuchMethod(
+        Invocation.method(
+          #loadAllCodes,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> setActiveFoodCode(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #setActiveFoodCode,
+          [id],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void removeListener(_i10.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void notifyListeners() => super.noSuchMethod(
+        Invocation.method(
+          #notifyListeners,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+}
+
+/// A class which mocks [ScanHistoryProvider].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockScanHistoryProvider extends _i1.Mock
+    implements _i11.ScanHistoryProvider {
+  MockScanHistoryProvider() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  List<_i8.ScanHistoryEntry> get history => (super.noSuchMethod(
+        Invocation.getter(#history),
+        returnValue: <_i8.ScanHistoryEntry>[],
+      ) as List<_i8.ScanHistoryEntry>);
+
+  @override
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get hasListeners => (super.noSuchMethod(
+        Invocation.getter(#hasListeners),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i4.Future<void> loadRecentScans() => (super.noSuchMethod(
+        Invocation.method(
+          #loadRecentScans,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> addScan(_i8.ScanHistoryEntry? entry) => (super.noSuchMethod(
+        Invocation.method(
+          #addScan,
+          [entry],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> clearHistory() => (super.noSuchMethod(
+        Invocation.method(
+          #clearHistory,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void removeListener(_i10.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void dispose() => super.noSuchMethod(
+        Invocation.method(
+          #dispose,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void notifyListeners() => super.noSuchMethod(
+        Invocation.method(
+          #notifyListeners,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
 }
